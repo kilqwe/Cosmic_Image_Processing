@@ -14,11 +14,11 @@ import io
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="JWST SN1987A — CV Pipeline",
-    page_icon="🔭",
+    page_icon="🌌",
     layout="wide",
 )
 
-st.title("🔭 JWST SN1987A — Computer Vision Pipeline")
+st.title("JWST SN1987A — Computer Vision Pipeline")
 st.markdown(
     "Processing real **James Webb Space Telescope** data. "
     "Target: SN 1987A — an active supernova in the Large Magellanic Cloud."
@@ -110,6 +110,7 @@ if page == "Overview":
         "along with the SN1987A remnant and its surrounding nebular structure."
     )
 
+    
     # Best single RGB — full width
     best_rgb = load_img("Images/sn1987a_rgb.png")
     if best_rgb:
@@ -128,7 +129,7 @@ if page == "Overview":
         "The middle panel (99.0th percentile, Q=5) gives the best balance "
         "between star brightness and faint nebular structure."
     )
-    comp_img = load_img("Images/sn1987a_comparison.png")
+    comp_img = load_img("Images/sn1987a_widerange.png")
     if comp_img:
         st.image(comp_img,
                  caption="Three Lupton stretch variants — left: Q=8, centre: Q=5 (best), right: Q=3",
@@ -143,7 +144,7 @@ if page == "Overview":
         "source in the upper-right of the wide field. The yellow box "
         "marks the region containing the supernova remnant."
     )
-    zoom_img = load_img("Images/sn1987a_widefield_zoom.png")
+    zoom_img = load_img("Images/sn198a_wide_zoom.png")
     if zoom_img:
         st.image(zoom_img,
                  caption="Wide field with zoom box (left) and ring region zoomed (right)",
@@ -303,7 +304,7 @@ elif page == "Detection":
         import pandas as pd
         df = pd.read_csv(catalog)
         st.markdown(f"**Source catalog** — {len(df)} sources")
-        st.dataframe(df[["id", "xcentroid", "ycentroid",
+        st.dataframe(df[["id", "x_centroid", "y_centroid",
                           "peak", "flux"]].head(10),
                      use_container_width=True)
 
