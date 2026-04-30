@@ -5,7 +5,6 @@ We process raw FITS observations of **SN 1987A** — an active supernova in the
 Large Magellanic Cloud — through a full imaging and detection pipeline using
 classical and modern CV techniques.
 
-> **Course project** — Computer Vision, 2026
 
 ---
 
@@ -184,7 +183,7 @@ Applied to binary Canny edge map using disk structuring elements:
 
 ---
 
-## 🔬 Scientific Findings
+## Scientific Findings
 
 **1. Alignment method must match data type.**
 ORB works well on star-dense wide fields (>3000 keypoints, >80% RANSAC
