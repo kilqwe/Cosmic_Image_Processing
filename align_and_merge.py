@@ -122,7 +122,7 @@ def wavelet_merge(bands: list[np.ndarray], wavelet: str = "db4",level: int = 4, 
 
 # Full pipeline -  align bands → wavelet merge → return RGB + fused arrays.
 
-def align_and_merge(bands: dict, blue_filter:  str = "F115W",green_filter: str = "F277W",red_filter:   str = "F444W",use_orb:      bool = True) :
+def align_and_merge(bands: dict, blue_filter:  str = "F560W",green_filter: str = "F1000W",red_filter:   str = "F2550W",use_orb:bool = False) :
 
     ref_key = red_filter
     ref     = bands[ref_key]["sci"]
@@ -179,7 +179,7 @@ def plot_alignment_result(result: dict, save: bool = True):
 
     plt.tight_layout()
     if save:
-        plt.savefig("alignment_result.png", dpi=150, bbox_inches="tight")
+        plt.savefig("Images_A/miri_alignment_result.png", dpi=150, bbox_inches="tight")
     else:
         plt.show()
     plt.close()

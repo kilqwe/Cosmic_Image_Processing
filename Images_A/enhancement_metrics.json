@@ -1,0 +1,7 @@
+{
+  "psnr_db": 10.7156,
+  "ssim": 0.2337000072002411,
+  "filter": "F560W/F1000W/F2550W",
+  "pipeline": "FFT DC-notch + CLAHE clip=0.03",
+  "target": "SN1987A wide field (Program 1232)"
+}
