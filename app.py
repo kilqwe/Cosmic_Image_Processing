@@ -1,367 +1,444 @@
+# ── app.py — Streamlit demo ───────────────────────────────────────────────────
+# pip install streamlit
+# Run with: streamlit run app.py
+
 import streamlit as st
 import numpy as np
-import matplotlib.pyplot as plt
 from pathlib import Path
-from skimage import feature
-from skimage.transform import hough_circle, hough_circle_peaks
-from scipy.ndimage import gaussian_filter
-from astropy.io import fits
-from astropy.wcs import WCS
 from PIL import Image
 import json
-import io
 
-# ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="JWST SN1987A — CV Pipeline",
-    page_icon="🌌",
+    page_icon="🔭",
     layout="wide",
 )
 
-st.title("JWST SN1987A — Computer Vision Pipeline")
+st.title("🔭 JWST SN1987A — Computer Vision Pipeline")
 st.markdown(
     "Processing real **James Webb Space Telescope** data. "
-    "Target: SN 1987A — an active supernova in the Large Magellanic Cloud."
+    "Target: **SN 1987A** — an active supernova in the Large Magellanic Cloud. "
+    "Two instruments, two wavelength regimes, one unified CV pipeline."
 )
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Select pipeline", [
+page = st.sidebar.radio("Select page", [
     "Overview",
-    "Enhancement",
-    "Detection",
+    "NIRCam Pipeline",
+    "MIRI Pipeline",
     "Results Summary",
 ])
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("**Dataset**")
-st.sidebar.markdown("- Program 1232 — wide field")
-st.sidebar.markdown("- Program 1726 — sub320 ring")
-st.sidebar.markdown("- Filters: F115W, F277W, F444W")
+st.sidebar.markdown("**NIRCam dataset**")
+st.sidebar.markdown("- Program 1232 + 1726")
+st.sidebar.markdown("- F115W, F277W, F444W")
+st.sidebar.markdown("- 1.15 – 4.44 μm")
+st.sidebar.markdown("---")
+st.sidebar.markdown("**MIRI dataset**")
+st.sidebar.markdown("- Program 1232")
+st.sidebar.markdown("- F560W, F1000W, F2550W")
+st.sidebar.markdown("- 5.6 – 25.5 μm")
 
 
-# ── Helper: load image ────────────────────────────────────────────────────────
 def load_img(path):
     p = Path(path)
     if p.exists():
         return Image.open(p)
     return None
 
-def load_npy(path):
-    p = Path(path)
-    if p.exists():
-        return np.load(p)
-    return None
 
-
-# ── Page: Overview ────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE: OVERVIEW
+# ══════════════════════════════════════════════════════════════════════════════
 if page == "Overview":
     st.header("Project Overview")
 
     col1, col2 = st.columns(2)
-
     with col1:
         st.subheader("What we built")
         st.markdown("""
-        A complete computer vision pipeline on real JWST observations:
+        A complete computer vision pipeline on real JWST observations
+        across **two instruments** covering different physics:
 
-        **ENHANCEMENT PIPELINE**
-        - ORB feature-based alignment across 3 filter bands
-        - Wavelet decomposition + fusion (db4, level 4)
-        - FFT power spectrum analysis + DC notch filter
+        **NIRCam** (1.15 – 4.44 μm) — stellar populations, ring structure
+        **MIRI** (5.6 – 25.5 μm) — warm dust, ejecta, circumstellar gas
+
+        **Enhancement pipeline**
+        - ORB feature-based alignment + wavelet fusion
+        - FFT power spectrum analysis + notch filtering
         - CLAHE local contrast enhancement
-        - False-color RGB composite (Lupton asinh stretch)
+        - Lupton asinh false-color compositing
 
-        **DETECTION PIPELINE**
+        **Detection pipeline**
         - Edge detection: Sobel, Canny, Laplacian of Gaussian
         - Morphological operations: erosion, dilation, opening, closing
-        - Source detection: DAOStarFinder (181 sources)
-        - Hough circle transform on SN ring
-        - PCA decomposition across 6 filter bands
+        - Source detection: DAOStarFinder
+        - Hough circle transform
+        - PCA decomposition across all bands
         """)
 
     with col2:
-        st.subheader("Key result")
-        rgb = load_img("Images/sn1987a_enhanced_final.png")
-        if rgb:
-            st.image(rgb, caption="SN 1987A — FFT + CLAHE enhanced RGB",
+        st.subheader("NIRCam — wide field RGB")
+        img = load_img("Images/sn1987a_rgb.png")
+        if img:
+            st.image(img, caption="F115W/F277W/F444W — Lupton stretch",
                      use_container_width=True)
         else:
-            st.info("Run enhance.ipynb first to generate outputs")
+            st.info("Run enhance.ipynb to generate images")
+
+    st.markdown("---")
+
+    # Instrument comparison
+    st.subheader("Two instruments — same target")
+    st.markdown(
+        "NIRCam and MIRI observe the same field but reveal completely different "
+        "physical components. NIRCam captures hot stars and the compact ring. "
+        "MIRI reveals warm dust emission from the ejecta and surrounding nebula "
+        "that is invisible in the near-infrared."
+    )
+
+    col1, col2 = st.columns(2)
+    with col1:
+        nircam = load_img("Images/sn1987a_enhanced_final.png")
+        if nircam:
+            st.image(nircam, caption="NIRCam — FFT + CLAHE enhanced (1–5 μm)",
+                     use_container_width=True)
+    with col2:
+        miri = load_img("Images/miri_enhanced_final.png")
+        if miri:
+            st.image(miri, caption="MIRI — FFT + CLAHE enhanced (5–25 μm)",
+                     use_container_width=True)
 
     st.markdown("---")
     st.subheader("CV Concepts Covered")
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Frequency domain", "FFT + notch filter")
-    c2.metric("Spatial filtering", "Sobel, Canny, LoG")
-    c3.metric("Sources detected", "181")
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Instruments", "NIRCam + MIRI")
+    c2.metric("Filter bands", "6 total")
+    c3.metric("Sources (NIRCam)", "181")
     c4.metric("Ring radius", "0.92 arcsec")
+    c5.metric("PCA components", "6")
 
-    # ── Wide field imagery section ────────────────────────────────────────────
     st.markdown("---")
-    st.subheader("Wide Field Imagery — Raw JWST Data")
+    st.subheader("Wide field gallery")
+    comp = load_img("Images/sn1987a_comparison.png")
+    if comp:
+        st.image(comp, caption="Dynamic range comparison — 3 Lupton stretch variants",
+                 use_container_width=True)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE: NIRCam PIPELINE
+# ══════════════════════════════════════════════════════════════════════════════
+elif page == "NIRCam Pipeline":
+    st.header("NIRCam Pipeline — 1.15 to 4.44 μm")
     st.markdown(
-        "False-color RGB composite from raw JWST NIRCam observations. "
-        "Three infrared filters are mapped to visible colors: "
-        "**F115W → blue** (1.15μm, hot stars), "
-        "**F277W → green** (2.77μm, warm gas), "
-        "**F444W → red** (4.44μm, warm dust). "
-        "Thousands of stars from the Large Magellanic Cloud are visible, "
-        "along with the SN1987A remnant and its surrounding nebular structure."
+        "Near-infrared observations from Programs 1232 and 1726. "
+        "Three filters: F115W (blue, hot stars), F277W (green, warm gas), "
+        "F444W (red, warm dust). Wide-field mosaic + sub320 ring subarray."
     )
 
-    
-    # Best single RGB — full width
-    best_rgb = load_img("Images/sn1987a_rgb.png")
-    if best_rgb:
-        st.image(best_rgb,
-                 caption="SN 1987A wide field — F115W/F277W/F444W (Lupton asinh stretch, 99th pct, Q=5)",
-                 use_container_width=True)
-    else:
-        st.warning("sn1987a_rgb.png not found — run the wide field cell in enhance.ipynb")
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "Enhancement", "Edge Detection", "Source Detection & Hough", "PCA"
+    ])
 
-    st.markdown("---")
-
-    # Dynamic range comparison — 3 variants side by side
-    st.subheader("Dynamic Range Comparison")
-    st.markdown(
-        "The same raw data stretched three different ways. "
-        "The middle panel (99.0th percentile, Q=5) gives the best balance "
-        "between star brightness and faint nebular structure."
-    )
-    comp_img = load_img("Images/sn1987a_widerange.png")
-    if comp_img:
-        st.image(comp_img,
-                 caption="Three Lupton stretch variants — left: Q=8, centre: Q=5 (best), right: Q=3",
-                 use_container_width=True)
-
-    st.markdown("---")
-
-    # Widefield zoom
-    st.subheader("Ring Region — Zoomed")
-    st.markdown(
-        "The SN1987A circumstellar ring is visible as a bright compact "
-        "source in the upper-right of the wide field. The yellow box "
-        "marks the region containing the supernova remnant."
-    )
-    zoom_img = load_img("Images/sn198a_wide_zoom.png")
-    if zoom_img:
-        st.image(zoom_img,
-                 caption="Wide field with zoom box (left) and ring region zoomed (right)",
-                 use_container_width=True)
-
-    st.markdown("---")
-
-    # Individual filter bands
-    st.subheader("Individual Filter Bands")
-    st.markdown(
-        "Each FITS file contains one filter band. "
-        "The ring is most prominent in **F444W** (4.44μm) — "
-        "warm dust heated by the expanding shockwave glows brightest "
-        "in the infrared. F115W captures hot stellar populations, "
-        "F277W shows warm molecular gas."
-    )
-    bands_img = load_img("Images/sn1987a_widefield_bands.png")
-    if bands_img:
-        st.image(bands_img,
-                 caption="F115W / F277W / F444W — individual bands, ZScale stretch",
-                 use_container_width=True)
-
-    st.markdown("---")
-
-    # Sub320 ring
-    st.subheader("Sub320 Ring — Targeted Observation")
-    st.markdown(
-        "Program 1726 used a 320×320 pixel subarray pointed directly at "
-        "the SN ring. The direct stack shows the ring in two wavelength "
-        "regimes: **red = F444W** (warm dust, 4.44μm) and "
-        "**cyan = F150W/F200W** (cooler gas, 1.5–2.0μm). "
-        "The offset between the two rings shows the bands are not "
-        "natively aligned — motivating the WCS alignment step."
-    )
-    ring_img = load_img("Images/sn1987a_direct.png")
-    if ring_img:
-        st.image(ring_img,
-                 caption="Sub320 direct stack — ring visible in two wavelength regimes",
-                 use_container_width=True)
-
-
-# ── Page: Enhancement ─────────────────────────────────────────────────────────
-elif page == "Enhancement":
-    st.header("Enhancement Pipeline")
-
-    st.subheader("1. ORB Alignment + Wavelet Merge")
-    st.markdown("""
-    Three NIRCam filter bands (F115W, F277W, F444W) are aligned using ORB
-    keypoint matching. The homography matrix maps F115W and F277W onto the
-    F444W reference frame. Aligned bands are fused using db4 wavelet
-    decomposition — at each subband the maximum coefficient is kept,
-    preserving the sharpest detail from whichever filter captured it best.
-    """)
-    align_img = load_img("Images/alignment_result.png")
-    if align_img:
-        st.image(align_img, caption="ORB alignment result — 4 panels",
-                 use_container_width=True)
-
-    st.markdown("---")
-    st.subheader("2. FFT Power Spectrum Analysis")
-    st.markdown("""
-    The 2D FFT of F277W shows a smooth power spectrum with no bright lines —
-    confirming the wide-field mosaic has no strong periodic noise.
-    A DC-only notch filter was applied. The sub320 F150W data showed
-    horizontal banding (1/f noise), removed with a Gaussian notch filter.
-    """)
-    col1, col2 = st.columns(2)
-    fft_img = load_img("Images/fft_widefield_gentle.png")
-    fft_sub = load_img("Images/fft_sub320_banding.png")
-    if fft_img:
-        col1.image(fft_img, caption="Wide field — DC notch",
-                   use_container_width=True)
-    if fft_sub:
-        col2.image(fft_sub, caption="Sub320 — banding removal",
-                   use_container_width=True)
-
-    st.markdown("---")
-    st.subheader("3. CLAHE + Final RGB")
-    st.markdown("""
-    CLAHE (Contrast Limited Adaptive Histogram Equalisation) boosts local
-    contrast in 8×8 pixel tiles. Applied post-FFT, it reveals faint structure
-    near bright sources — the SN ring boundary becomes clearly resolvable.
-    """)
-    enh_img = load_img("Images/sn1987a_enhanced_final.png")
-    if enh_img:
-        st.image(enh_img, caption="Original vs FFT+CLAHE enhanced",
-                 use_container_width=True)
-
-    st.markdown("---")
-    st.subheader("4. Metrics")
-
-    metrics_path = Path("enhancement_metrics.json")
-    if metrics_path.exists():
-        with open(metrics_path) as f:
-            m = json.load(f)
-        col1, col2, col3 = st.columns(3)
-        col1.metric("PSNR", f"{m['psnr_db']:.2f} dB")
-        col2.metric("SSIM", f"{m['ssim']:.4f}")
-        col3.metric("Pipeline", m["pipeline"])
-        st.info(
-            "PSNR and SSIM measure similarity between original and enhanced. "
-            "Low values are expected for CLAHE — the technique intentionally "
-            "redistributes the histogram. The visual improvement (ring structure "
-            "clearly resolvable) is the primary quality metric."
-        )
-    else:
-        st.warning("Run enhance.ipynb Cell 8 to generate metrics")
-
-
-# ── Page: Detection ───────────────────────────────────────────────────────────
-elif page == "Detection":
-    st.header("Detection Pipeline")
-
-    st.subheader("1. Edge Detection")
-    st.markdown("""
-    Four edge detectors applied to the enhanced F444W band:
-    - **Sobel**: gradient magnitude — smooth, continuous edges
-    - **Canny σ=1.0**: fine edges — detects individual ring hotspots
-    - **Canny σ=3.0**: coarse edges — clean ring boundary
-    - **LoG σ=2.0**: Laplacian of Gaussian — zero-crossing detection
-    """)
-    edge_img = load_img("Images/edge_detection.png")
-    if edge_img:
-        st.image(edge_img, caption="Edge detection comparison",
-                 use_container_width=True)
-
-    st.markdown("---")
-    st.subheader("2. Morphological Operations")
-    st.markdown("""
-    Binary morphological operations on the Canny edge map:
-    - **Erosion**: removes thin noise connections between sources
-    - **Dilation**: expands edge boundaries, connects nearby fragments
-    - **Opening**: erosion then dilation — removes small noise blobs
-    - **Closing**: dilation then erosion — fills gaps in ring contour
-    """)
-    morph_img = load_img("Images/morphological_ops.png")
-    if morph_img:
-        st.image(morph_img, caption="Morphological operations",
-                 use_container_width=True)
-
-    st.markdown("---")
-    st.subheader("3. Source Detection")
-    st.markdown("""
-    DAOStarFinder detected **181 sources** in the F444W wide-field band
-    at 5σ above background. Each source centroid was converted to RA/Dec
-    using the WCS header and saved to source_catalog.csv.
-    The SN1987A ring itself appears as multiple detections along its
-    bright hotspot boundary.
-    """)
-    src_img = load_img("Images/source_detection.png")
-    if src_img:
-        st.image(src_img, caption="181 sources detected — cyan circles",
-                 use_container_width=True)
-
-    catalog = Path("source_catalog.csv")
-    if catalog.exists():
-        import pandas as pd
-        df = pd.read_csv(catalog)
-        st.markdown(f"**Source catalog** — {len(df)} sources")
-        st.dataframe(df[["id", "x_centroid", "y_centroid",
-                          "peak", "flux"]].head(10),
+    with tab1:
+        st.subheader("ORB Alignment + Wavelet Fusion")
+        st.markdown("""
+        Three NIRCam bands aligned using ORB keypoint matching. Homography
+        estimated with RANSAC. Bands fused with db4 wavelet decomposition —
+        maximum coefficient at each subband preserves sharpest detail.
+        """)
+        align = load_img("Images/alignment_result.png")
+        if align:
+            st.image(align, caption="ORB alignment — 4 panel result",
                      use_container_width=True)
 
-    st.markdown("---")
-    st.subheader("4. Hough Circle Transform")
-    st.markdown("""
-    The Hough circle transform votes for circles of varying radii in the
-    Canny edge map. Applied to a cropped region around the ring to avoid
-    false positives from field stars.
-    """)
-    hough_img = load_img("Images/hough_circle.png")
-    if hough_img:
-        st.image(hough_img, caption="Hough circle detection",
-                 use_container_width=True)
+        st.markdown("---")
+        st.subheader("FFT Power Spectrum + Filtering")
+        col1, col2 = st.columns(2)
+        f1 = load_img("Images/fft_widefield_gentle.png")
+        f2 = load_img("Images/fft_sub320_banding.png")
+        if f1:
+            col1.image(f1, caption="Wide field — DC notch (clean data)",
+                       use_container_width=True)
+        if f2:
+            col2.image(f2, caption="Sub320 — Gaussian notch (real 1/f banding)",
+                       use_container_width=True)
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Detected radius", "54 px = 0.92\"")
-    col2.metric("Literature value", "0.85 arcsec")
-    col3.metric("Difference", "0.07 arcsec (8%)")
-    st.success(
-        "The 8% difference is consistent with the expanding shock front — "
-        "SN1987A's ring is actively growing and JWST data is more recent "
-        "than most published measurements."
+        st.markdown("---")
+        st.subheader("CLAHE + Final Enhanced RGB")
+        enh = load_img("Images/sn1987a_enhanced_final.png")
+        if enh:
+            st.image(enh, caption="Original vs FFT + CLAHE enhanced",
+                     use_container_width=True)
+
+        metrics_path = Path("enhancement_metrics.json")
+        if metrics_path.exists():
+            with open(metrics_path) as f:
+                m = json.load(f)
+            c1, c2 = st.columns(2)
+            c1.metric("PSNR", f"{m['psnr_db']:.2f} dB")
+            c2.metric("SSIM", f"{m['ssim']:.4f}")
+            st.info(
+                "Low PSNR/SSIM are expected for CLAHE — the technique "
+                "intentionally redistributes the histogram. Visual ring "
+                "detectability is the primary quality metric."
+            )
+
+    with tab2:
+        st.subheader("Edge Detection Comparison")
+        st.markdown("""
+        Four edge detectors applied to the enhanced F444W band:
+        - **Sobel**: gradient magnitude — smooth continuous edges
+        - **Canny σ=1.0**: fine edges — individual ring hotspots
+        - **Canny σ=3.0**: coarse edges — clean ring perimeter
+        - **LoG σ=2.0**: Laplacian of Gaussian — zero-crossing detection
+        """)
+        edge = load_img("Images/edge_detection.png")
+        if edge:
+            st.image(edge, caption="Edge detection comparison — 6 panels",
+                     use_container_width=True)
+
+        st.markdown("---")
+        st.subheader("Morphological Operations")
+        st.markdown("""
+        Binary morphological operations on the Canny edge map:
+        erosion removes thin noise, dilation expands boundaries,
+        opening removes small blobs, closing fills ring contour gaps.
+        """)
+        morph = load_img("Images/morphological_ops.png")
+        if morph:
+            st.image(morph, caption="Morphological operations — 6 panels",
+                     use_container_width=True)
+
+    with tab3:
+        st.subheader("Source Detection — DAOStarFinder")
+        st.markdown(
+            "181 sources detected in F444W at 5σ above background. "
+            "Centroids converted to RA/Dec via WCS. The ring appears "
+            "as multiple detections along its bright hotspot boundary."
+        )
+        src = load_img("Images/source_detection.png")
+        if src:
+            st.image(src, caption="181 sources — cyan circles",
+                     use_container_width=True)
+
+        catalog = Path("source_catalog.csv")
+        if catalog.exists():
+            import pandas as pd
+            df = pd.read_csv(catalog)
+            st.markdown(f"**Source catalog** — {len(df)} sources")
+            st.dataframe(df[["id","xcentroid","ycentroid","peak","flux"]].head(10),
+                         use_container_width=True)
+
+        st.markdown("---")
+        st.subheader("Hough Circle Transform")
+        st.markdown("""
+        Canny edge detection on a 160×160px crop centred on the ring.
+        Hough circle transform across radii 15–55px. Top detection
+        converted from pixels to arcseconds via WCS pixel scale.
+        """)
+        hough = load_img("Images/hough_circle.png")
+        if hough:
+            st.image(hough, caption="Hough circle detection — focused crop",
+                     use_container_width=True)
+
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Detected radius", "0.92 arcsec")
+        c2.metric("Literature value", "0.85 arcsec")
+        c3.metric("Difference", "8%")
+        st.success(
+            "8% difference is consistent with active ring expansion — "
+            "SN1987A's shock front grows at ~3,500 km/s and JWST data "
+            "post-dates most published measurements."
+        )
+
+    with tab4:
+        st.subheader("PCA Decomposition")
+        st.markdown("""
+        All filter bands stacked into a pixel × band matrix. PCA applied
+        with 6 components. Each component separates a different physical
+        emission process:
+        - **PC1 (79.7%)**: overall brightness — stellar continuum
+        - **PC2 (10.7%)**: ring-specific emission — isolated from stars
+        - **PC3 (9.6%)**: spectral contrast — ring has negative loading
+        """)
+        pca = load_img("Images/pca_components.png")
+        if pca:
+            st.image(pca, caption="PCA decomposition — 6 components",
+                     use_container_width=True)
+
+        pca_path = Path("pca_results.json")
+        if pca_path.exists():
+            with open(pca_path) as f:
+                pd = json.load(f)
+            cols = st.columns(len(pd["explained_variance_pct"]))
+            for i, (col, var) in enumerate(
+                    zip(cols, pd["explained_variance_pct"])):
+                col.metric(f"PC{i+1}", f"{var:.1f}%")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE: MIRI PIPELINE
+# ══════════════════════════════════════════════════════════════════════════════
+elif page == "MIRI Pipeline":
+    st.header("MIRI Pipeline — 5.6 to 25.5 μm")
+    st.markdown(
+        "Mid-infrared observations from Program 1232 using MIRI. "
+        "Three filters: F560W (5.6μm), F1000W (10μm), F2550W (25.5μm). "
+        "At these wavelengths MIRI captures warm dust emission, "
+        "polycyclic aromatic hydrocarbons (PAH), and silicate features "
+        "that are completely invisible to NIRCam."
     )
 
-    st.markdown("---")
-    st.subheader("5. PCA Decomposition")
-    st.markdown("""
-    All available filter bands stacked into a data cube and decomposed
-    with PCA. Each principal component separates a different physical
-    emission process:
-    - **PC1 (79.7%)**: overall brightness — dominated by stellar continuum
-    - **PC2 (10.7%)**: ring-specific emission — SN ring isolated from stars
-    - **PC3 (9.6%)**: spectral contrast — ring has negative loading,
-      spectrally distinct from background population
-    """)
-    pca_img = load_img("Images/pca_components.png")
-    if pca_img:
-        st.image(pca_img, caption="PCA decomposition — 6 components",
-                 use_container_width=True)
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "Enhancement", "Edge Detection", "Source Detection", "PCA"
+    ])
 
-    pca_path = Path("pca_results.json")
-    if pca_path.exists():
-        with open(pca_path) as f:
-            pca_data = json.load(f)
-        st.markdown("**Explained variance per component:**")
-        cols = st.columns(len(pca_data["explained_variance_pct"]))
-        for i, (col, var) in enumerate(
-                zip(cols, pca_data["explained_variance_pct"])):
-            col.metric(f"PC{i+1}", f"{var:.1f}%")
+    with tab1:
+        st.subheader("Raw MIRI + Enhanced RGB")
+        st.markdown("""
+        MIRI filters span a 5× larger wavelength range than NIRCam,
+        meaning each filter captures fundamentally different dust and
+        gas emission processes. F560W shows PAH emission, F1000W
+        captures silicate absorption, F2550W traces the warmest dust.
+        """)
+        miri_raw = load_img("Images/miri_raw_enhanced.png")
+        if miri_raw:
+            st.image(miri_raw,
+                     caption="Raw MIRI F1000W (left) vs FFT+CLAHE enhanced RGB (right)",
+                     use_container_width=True)
+        else:
+            st.info("Save your MIRI enhanced comparison as Images/miri_raw_enhanced.png")
+
+        st.markdown("---")
+        st.subheader("FFT Power Spectrum")
+        fft_miri = load_img("Images/miri_fft_power.png")
+        if fft_miri:
+            st.image(fft_miri,
+                     caption="F1000W FFT power spectrum — smooth, no periodic noise",
+                     use_container_width=True)
+        else:
+            st.info("Save as Images/miri_fft_power.png")
+
+        st.markdown("---")
+        st.subheader("Enhancement Pipeline")
+        st.markdown("""
+        Same FFT + CLAHE pipeline applied to MIRI bands. The mid-IR
+        data has a smooth power spectrum confirming no periodic noise.
+        DC-only notch filter applied. CLAHE reveals the filamentary
+        nebular structure surrounding the compact remnant.
+        """)
+        miri_enh = load_img("Images/miri_enhancement_pipeline.png")
+        if miri_enh:
+            st.image(miri_enh,
+                     caption="Enhancement pipeline — Raw / FFT / CLAHE / FFT+CLAHE",
+                     use_container_width=True)
+        else:
+            st.info("Save as Images/miri_enhancement_pipeline.png")
+
+        col1, col2 = st.columns(2)
+        f1 = load_img("Images/miri_fft_banding.png")
+        f2 = load_img("Images/miri_fft_gentle.png")
+        if f1:
+            col1.image(f1, caption="MIRI FFT — banding filter",
+                       use_container_width=True)
+        if f2:
+            col2.image(f2, caption="MIRI FFT — DC notch",
+                       use_container_width=True)
+
+    with tab2:
+        st.subheader("Edge Detection on MIRI")
+        st.markdown("""
+        The same four edge detectors applied to MIRI F2550W.
+        The compact SN1987A remnant dominates as a bright circular
+        source — clearly separated from the extended nebular emission
+        by all detectors. The Laplacian of Gaussian is particularly
+        effective at distinguishing the remnant boundary from the
+        smooth dust background.
+        """)
+        edge_miri = load_img("Images/miri_edge_detection.png")
+        if edge_miri:
+            st.image(edge_miri,
+                     caption="Edge detection on MIRI F2550W — 6 panels",
+                     use_container_width=True)
+        else:
+            st.info("Save as Images/miri_edge_detection.png")
+
+        st.markdown("---")
+        st.subheader("Morphological Operations")
+        morph_miri = load_img("Images/miri_morphological_ops.png")
+        if morph_miri:
+            st.image(morph_miri,
+                     caption="Morphological operations on MIRI edge map",
+                     use_container_width=True)
+        else:
+            st.info("Save as Images/miri_morphological_ops.png")
+
+    with tab3:
+        st.subheader("Source Detection — MIRI F2550W")
+        st.markdown("""
+        DAOStarFinder applied to MIRI F2550W. Only 3 sources detected —
+        expected, because at 25.5μm the field is dominated by diffuse
+        extended emission. Point-like sources are rare at this wavelength.
+        The compact SN1987A remnant is the dominant detected source.
+        """)
+        src_miri = load_img("Images/miri_source_detection.png")
+        if src_miri:
+            st.image(src_miri,
+                     caption="3 sources detected in F2550W",
+                     use_container_width=True)
+        else:
+            st.info("Save as Images/miri_source_detection.png")
+
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Sources (F2550W)", "3")
+        c2.metric("Sources (NIRCam F444W)", "181")
+        c3.metric("Reason", "Diffuse mid-IR emission")
+        st.info(
+            "The large difference in source counts between NIRCam (181) "
+            "and MIRI (3) is physically meaningful — stars are bright in "
+            "the near-IR but faint at 25μm. Extended dust emission fills "
+            "the field, suppressing point-source detection."
+        )
+
+        st.markdown("---")
+        st.subheader("Hough Circle — MIRI")
+        hough_miri = load_img("Images/miri_hough_circle.png")
+        if hough_miri:
+            st.image(hough_miri,
+                     caption="Hough circle on MIRI F2550W remnant",
+                     use_container_width=True)
+        else:
+            st.info("Save as Images/miri_hough_circle.png")
+
+    with tab4:
+        st.subheader("PCA Decomposition — MIRI")
+        st.markdown("""
+        PCA applied to the 3 MIRI bands. With only 3 bands, PCA gives
+        3 components. PC1 captures the dominant dust continuum emission.
+        PC2 separates the compact remnant from the extended nebula —
+        demonstrating a clear spectral difference between the supernova
+        ejecta and the surrounding LMC interstellar medium.
+        """)
+        pca_miri = load_img("Images/miri_pca_components.png")
+        if pca_miri:
+            st.image(pca_miri,
+                     caption="PCA decomposition — MIRI 3-band",
+                     use_container_width=True)
+        else:
+            st.info("Save as Images/miri_pca_components.png")
 
 
-# ── Page: Results Summary ─────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE: RESULTS SUMMARY
+# ══════════════════════════════════════════════════════════════════════════════
 elif page == "Results Summary":
     st.header("Results Summary")
 
-    st.subheader("Enhancement")
+    st.subheader("Enhancement pipeline")
     c1, c2, c3 = st.columns(3)
     c1.metric("Alignment", "ORB + Homography")
     c2.metric("Fusion", "Wavelet db4 level 4")
@@ -376,10 +453,10 @@ elif page == "Results Summary":
         c2.metric("SSIM", f"{m['ssim']:.4f}")
 
     st.markdown("---")
-    st.subheader("Detection")
+    st.subheader("Detection pipeline")
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Edge detectors", "4 methods")
-    c2.metric("Sources found", "181")
+    c1.metric("NIRCam sources", "181")
+    c2.metric("MIRI sources", "3")
     c3.metric("Ring radius", "0.92 arcsec")
     c4.metric("Literature", "0.85 arcsec")
 
@@ -387,47 +464,63 @@ elif page == "Results Summary":
     if pca_path.exists():
         with open(pca_path) as f:
             p = json.load(f)
-        st.metric("PCA variance (PC1+PC2+PC3)",
+        st.metric("NIRCam PCA variance (PC1+PC2+PC3)",
                   f"{sum(p['explained_variance_pct'][:3]):.1f}%")
 
     st.markdown("---")
     st.subheader("Key findings")
     st.markdown("""
-    1. ORB alignment works well on star-dense wide fields but fails on
-       sub320 subarrays — WCS reprojection is the correct method for
-       compact targeted observations.
-    2. FFT power spectrum confirmed the wide-field mosaic is clean — no
-       periodic noise. Sub320 data had real 1/f banding which was removed.
-    3. CLAHE revealed the SN ring boundary which was unresolvable in the
-       raw stretched image.
-    4. Hough circle measured the ring at **0.92 arcsec** — 8% above the
-       published value, consistent with ring expansion since publication.
-    5. PCA PC2 isolates the ring from field stars — demonstrating the
-       ring has a unique spectral signature across JWST filter bands.
+    1. **ORB alignment is dataset-dependent.** Works on star-dense NIRCam
+       wide fields but fails on sub320 subarrays due to the detector gap
+       artifact. WCS reprojection is required for compact observations.
+
+    2. **FFT confirmed clean calibration.** Both NIRCam and MIRI wide-field
+       mosaics show smooth power spectra — no periodic noise. Sub320 NIRCam
+       data has real 1/f banding requiring explicit frequency-domain filtering.
+
+    3. **CLAHE reveals ring structure.** The circumstellar ring boundary
+       is unresolvable in raw stretched data. Post-CLAHE it becomes
+       clearly circular, enabling the Hough circle detection.
+
+    4. **Hough circle confirms ring expansion.** Measured radius 0.92 arcsec
+       vs 0.85 arcsec published — consistent with the actively expanding
+       shock front at ~3,500 km/s.
+
+    5. **NIRCam and MIRI trace different physics.** NIRCam PC2 isolates
+       the compact ring, while MIRI PC2 separates ejecta from the LMC ISM.
+       Together they provide a complete multi-wavelength picture of the
+       supernova remnant.
+
+    6. **Source count reflects wavelength physics.** NIRCam detects 181
+       point sources while MIRI detects 3 — stars are bright in near-IR
+       but the mid-IR is dominated by extended dust emission that suppresses
+       point-source detection.
     """)
 
     st.markdown("---")
     st.subheader("Output files")
-    output_files = [
-        "Images/sn1987a_rgb.png",
-        "Images/sn1987a_comparison.png",
-        "Images/sn1987a_widefield_bands.png",
-        "Images/sn1987a_widefield_zoom.png",
-        "Images/sn1987a_direct.png",
-        "Images/sn1987a_enhanced_final.png",
-        "Images/alignment_result.png",
-        "Images/fft_widefield_gentle.png",
-        "Images/fft_sub320_banding.png",
-        "Images/edge_detection.png",
-        "Images/morphological_ops.png",
-        "Images/source_detection.png",
-        "Images/hough_circle.png",
-        "Images/pca_components.png",
-        "source_catalog.csv",
-        "enhancement_metrics.json",
-        "pca_results.json",
-        "Images/sn1987a_widefield_bands.png",
+    files = [
+        ("Images/sn1987a_rgb.png",             "NIRCam wide field RGB"),
+        ("Images/sn1987a_comparison.png",       "NIRCam dynamic range comparison"),
+        ("Images/sn1987a_enhanced_final.png",   "NIRCam FFT+CLAHE enhanced"),
+        ("Images/alignment_result_nircam.png",         "ORB alignment result"),
+        ("Images/fft_widefield_gentle.png",     "NIRCam FFT wide field"),
+        ("Images/fft_sub320_banding.png",       "NIRCam sub320 banding removal"),
+        ("Images/edge_detection_nircam.png",           "NIRCam edge detection"),
+        ("Images/morphological_ops_nircam.png",        "NIRCam morphological ops"),
+        ("Images/source_detection_nircam.png",         "NIRCam 181 sources"),
+        ("Images/hough_circle_nircam.png",             "NIRCam Hough circle"),
+        ("Images/pca_components_nircam.png",           "NIRCam PCA 6 components"),
+        ("Images/miri_raw_enhanced.png",        "MIRI raw + enhanced RGB"),
+        ("Images/miri_edge_detection.png",      "MIRI edge detection"),
+        ("Images/miri_morphological_ops.png",   "MIRI morphological ops"),
+        ("Images/miri_source_detection.png",    "MIRI 3 sources"),
+        ("Images/miri_hough_circle.png",        "MIRI Hough circle"),
+        ("Images/miri_pca_components.png",      "MIRI PCA components"),
+        ("source_catalog_nircam.csv",                  "NIRCam source catalog"),
+        ("enhancement_metrics_nircam.json",            "PSNR + SSIM metrics"),
+        ("pca_results_nircam.json",                    "PCA variance results"),
     ]
-    for fname in output_files:
+    for fname, desc in files:
         exists = Path(fname).exists()
-        st.markdown(f"{'Created' if exists else 'Not Created'} `{fname}`")
+        st.markdown(f"{'Created' if exists else 'Not Created'} `{fname}` — {desc}")
