@@ -84,7 +84,7 @@ if page == "Overview":
         img = load_img("Images/sn1987a_rgb.png")
         if img:
             st.image(img, caption="F115W/F277W/F444W — Lupton stretch",
-                     use_container_width=True)
+                     width='stretch')
         else:
             st.info("Run enhance.ipynb to generate images")
 
@@ -104,12 +104,12 @@ if page == "Overview":
         nircam = load_img("Images/sn1987a_enhanced_final.png")
         if nircam:
             st.image(nircam, caption="NIRCam — FFT + CLAHE enhanced (1–5 μm)",
-                     use_container_width=True)
+                     width='stretch')
     with col2:
         miri = load_img("Images/miri_enhanced_final.png")
         if miri:
             st.image(miri, caption="MIRI — FFT + CLAHE enhanced (5–25 μm)",
-                     use_container_width=True)
+                     width='stretch')
 
     st.markdown("---")
     st.subheader("CV Concepts Covered")
@@ -125,7 +125,7 @@ if page == "Overview":
     comp = load_img("Images/sn1987a_comparison.png")
     if comp:
         st.image(comp, caption="Dynamic range comparison — 3 Lupton stretch variants",
-                 use_container_width=True)
+                 width='stretch')
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -153,7 +153,7 @@ elif page == "NIRCam Pipeline":
         align = load_img("Images/alignment_result.png")
         if align:
             st.image(align, caption="ORB alignment — 4 panel result",
-                     use_container_width=True)
+                     width='stretch')
 
         st.markdown("---")
         st.subheader("FFT Power Spectrum + Filtering")
@@ -162,17 +162,17 @@ elif page == "NIRCam Pipeline":
         f2 = load_img("Images/fft_sub320_banding.png")
         if f1:
             col1.image(f1, caption="Wide field — DC notch (clean data)",
-                       use_container_width=True)
+                       width='stretch')
         if f2:
             col2.image(f2, caption="Sub320 — Gaussian notch (real 1/f banding)",
-                       use_container_width=True)
+                       width='stretch')
 
         st.markdown("---")
         st.subheader("CLAHE + Final Enhanced RGB")
         enh = load_img("Images/sn1987a_enhanced_final.png")
         if enh:
             st.image(enh, caption="Original vs FFT + CLAHE enhanced",
-                     use_container_width=True)
+                     width='stretch')
 
         metrics_path = Path("enhancement_metrics.json")
         if metrics_path.exists():
@@ -196,10 +196,10 @@ elif page == "NIRCam Pipeline":
         - **Canny σ=3.0**: coarse edges — clean ring perimeter
         - **LoG σ=2.0**: Laplacian of Gaussian — zero-crossing detection
         """)
-        edge = load_img("Images/edge_detection.png")
+        edge = load_img("Images/edge_detection_nircam.png")
         if edge:
             st.image(edge, caption="Edge detection comparison — 6 panels",
-                     use_container_width=True)
+                     width='stretch')
 
         st.markdown("---")
         st.subheader("Morphological Operations")
@@ -208,10 +208,10 @@ elif page == "NIRCam Pipeline":
         erosion removes thin noise, dilation expands boundaries,
         opening removes small blobs, closing fills ring contour gaps.
         """)
-        morph = load_img("Images/morphological_ops.png")
+        morph = load_img("Images/morphological_ops_nircam.png")
         if morph:
             st.image(morph, caption="Morphological operations — 6 panels",
-                     use_container_width=True)
+                     width='stretch')
 
     with tab3:
         st.subheader("Source Detection — DAOStarFinder")
@@ -220,10 +220,10 @@ elif page == "NIRCam Pipeline":
             "Centroids converted to RA/Dec via WCS. The ring appears "
             "as multiple detections along its bright hotspot boundary."
         )
-        src = load_img("Images/source_detection.png")
+        src = load_img("Images/source_detection_nircam.png")
         if src:
             st.image(src, caption="181 sources — cyan circles",
-                     use_container_width=True)
+                     width='stretch')
 
         catalog = Path("source_catalog.csv")
         if catalog.exists():
@@ -231,7 +231,7 @@ elif page == "NIRCam Pipeline":
             df = pd.read_csv(catalog)
             st.markdown(f"**Source catalog** — {len(df)} sources")
             st.dataframe(df[["id","xcentroid","ycentroid","peak","flux"]].head(10),
-                         use_container_width=True)
+                         width='stretch')
 
         st.markdown("---")
         st.subheader("Hough Circle Transform")
@@ -240,10 +240,10 @@ elif page == "NIRCam Pipeline":
         Hough circle transform across radii 15–55px. Top detection
         converted from pixels to arcseconds via WCS pixel scale.
         """)
-        hough = load_img("Images/hough_circle.png")
+        hough = load_img("Images/hough_circle_nircam.png")
         if hough:
             st.image(hough, caption="Hough circle detection — focused crop",
-                     use_container_width=True)
+                     width='stretch')
 
         c1, c2, c3 = st.columns(3)
         c1.metric("Detected radius", "0.92 arcsec")
@@ -265,10 +265,10 @@ elif page == "NIRCam Pipeline":
         - **PC2 (10.7%)**: ring-specific emission — isolated from stars
         - **PC3 (9.6%)**: spectral contrast — ring has negative loading
         """)
-        pca = load_img("Images/pca_components.png")
+        pca = load_img("Images/pca_components_nircam.png")
         if pca:
             st.image(pca, caption="PCA decomposition — 6 components",
-                     use_container_width=True)
+                     width='stretch')
 
         pca_path = Path("pca_results.json")
         if pca_path.exists():
@@ -309,7 +309,7 @@ elif page == "MIRI Pipeline":
         if miri_raw:
             st.image(miri_raw,
                      caption="Raw MIRI F1000W (left) vs FFT+CLAHE enhanced RGB (right)",
-                     use_container_width=True)
+                     width='stretch')
         else:
             st.info("Save your MIRI enhanced comparison as Images/miri_raw_enhanced.png")
 
@@ -319,7 +319,7 @@ elif page == "MIRI Pipeline":
         if fft_miri:
             st.image(fft_miri,
                      caption="F1000W FFT power spectrum — smooth, no periodic noise",
-                     use_container_width=True)
+                     width='stretch')
         else:
             st.info("Save as Images/miri_fft_power.png")
 
@@ -335,7 +335,7 @@ elif page == "MIRI Pipeline":
         if miri_enh:
             st.image(miri_enh,
                      caption="Enhancement pipeline — Raw / FFT / CLAHE / FFT+CLAHE",
-                     use_container_width=True)
+                     width='stretch')
         else:
             st.info("Save as Images/miri_enhancement_pipeline.png")
 
@@ -344,10 +344,10 @@ elif page == "MIRI Pipeline":
         f2 = load_img("Images/miri_fft_gentle.png")
         if f1:
             col1.image(f1, caption="MIRI FFT — banding filter",
-                       use_container_width=True)
+                       width='stretch')
         if f2:
             col2.image(f2, caption="MIRI FFT — DC notch",
-                       use_container_width=True)
+                       width='stretch')
 
     with tab2:
         st.subheader("Edge Detection on MIRI")
@@ -363,7 +363,7 @@ elif page == "MIRI Pipeline":
         if edge_miri:
             st.image(edge_miri,
                      caption="Edge detection on MIRI F2550W — 6 panels",
-                     use_container_width=True)
+                     width='stretch')
         else:
             st.info("Save as Images/miri_edge_detection.png")
 
@@ -373,7 +373,7 @@ elif page == "MIRI Pipeline":
         if morph_miri:
             st.image(morph_miri,
                      caption="Morphological operations on MIRI edge map",
-                     use_container_width=True)
+                     width='stretch')
         else:
             st.info("Save as Images/miri_morphological_ops.png")
 
@@ -389,7 +389,7 @@ elif page == "MIRI Pipeline":
         if src_miri:
             st.image(src_miri,
                      caption="3 sources detected in F2550W",
-                     use_container_width=True)
+                     width='stretch')
         else:
             st.info("Save as Images/miri_source_detection.png")
 
@@ -410,7 +410,7 @@ elif page == "MIRI Pipeline":
         if hough_miri:
             st.image(hough_miri,
                      caption="Hough circle on MIRI F2550W remnant",
-                     use_container_width=True)
+                     width='stretch')
         else:
             st.info("Save as Images/miri_hough_circle.png")
 
@@ -427,7 +427,7 @@ elif page == "MIRI Pipeline":
         if pca_miri:
             st.image(pca_miri,
                      caption="PCA decomposition — MIRI 3-band",
-                     use_container_width=True)
+                     width='stretch')
         else:
             st.info("Save as Images/miri_pca_components.png")
 
@@ -438,6 +438,42 @@ elif page == "MIRI Pipeline":
 elif page == "Results Summary":
     st.header("Results Summary")
 
+    st.markdown("---")
+    st.subheader("Collated results videos")
+    st.markdown(
+        "Provide local MP4 file paths or URLs for the NIRCam and MIRI collated results videos. "
+        "If the file exists, the video will be displayed below."
+    )
+    nircam_video_path = st.text_input(
+        "NIRCam video path",
+        value="Images/sn1987a_nircam_demo.mp4",
+        help="Set the local MP4 path or URL for the NIRCam collated results video."
+    )
+    miri_video_path = st.text_input(
+        "MIRI video path",
+        value="Images/sn1987a_miri_demo.mp4",
+        help="Set the local MP4 path or URL for the MIRI collated results video."
+    )
+
+    st.markdown("**NIRCam collated results video**")
+    st.write(f"Path: {nircam_video_path}, Exists: {Path(nircam_video_path).exists()}")
+    st.write(f"Absolute path: {Path(nircam_video_path).resolve()}")
+    if nircam_video_path:
+        if Path(nircam_video_path).exists() or nircam_video_path.startswith(("http://", "https://")):
+            st.video(str(Path(nircam_video_path).resolve()))
+        else:
+            st.info("Set a valid NIRCam MP4 path or URL once available.")
+
+    st.markdown("**MIRI collated results video**")
+    st.write(f"Path: {miri_video_path}, Exists: {Path(miri_video_path).exists()}")
+    st.write(f"Absolute path: {Path(miri_video_path).resolve()}")
+    if miri_video_path:
+        if Path(miri_video_path).exists() or miri_video_path.startswith(("http://", "https://")):
+            st.video(str(Path(miri_video_path).resolve()))
+        else:
+            st.info("Set a valid MIRI MP4 path or URL once available.")
+
+    st.markdown("---")
     st.subheader("Enhancement pipeline")
     c1, c2, c3 = st.columns(3)
     c1.metric("Alignment", "ORB + Homography")
