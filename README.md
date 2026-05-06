@@ -12,11 +12,11 @@ classical and modern CV techniques.
 
 | Wide field RGB | FFT + CLAHE Enhanced | Hough Circle Detection |
 |---|---|---|
-| ![wide](Images/sn1987a_rgb.png) | ![enhanced](Images/sn1987a_enhanced_final.png) | ![hough](Images/hough_circle.png) |
+| ![wide](Images/sn1987a_rgb.png) | ![enhanced](Images/sn1987a_enhanced_final.png) | ![hough](Images/hough_circle_nircam.png) |
 
 | Edge Detection | PCA Decomposition | Source Detection |
 |---|---|---|
-| ![edges](Images/edge_detection.png) | ![pca](Images/pca_components.png) | ![sources](Images/source_detection.png) |
+| ![edges](Images/edge_detection_nircam.png) | ![pca](Images/pca_components_nircam.png) | ![sources](Images/source_detection_nircam.png) |
 
 ---
 
@@ -60,14 +60,14 @@ CV_JWST_imagery/
     ├── sn1987a_rgb.png
     ├── sn1987a_comparison.png
     ├── sn1987a_enhanced_final.png
-    ├── alignment_result.png
+    ├── alignment_result_nircam.png
     ├── fft_widefield_gentle.png
     ├── fft_sub320_banding.png
-    ├── edge_detection.png
-    ├── morphological_ops.png
-    ├── source_detection.png
-    ├── hough_circle.png
-    └── pca_components.png
+    ├── edge_detection_nircam.png
+    ├── morphological_ops_nircam.png
+    ├── source_detection_nircam.png
+    ├── hough_circle_nircam.png
+    └── pca_components_nircam.png
 ```
 
 ---
