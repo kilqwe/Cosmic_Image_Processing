@@ -446,12 +446,12 @@ elif page == "Results Summary":
     )
     nircam_video_path = st.text_input(
         "NIRCam video path",
-        value="Images/sn1987a_nircam_demo.mp4",
+        value="Images/nircam.mp4",
         help="Set the local MP4 path or URL for the NIRCam collated results video."
     )
     miri_video_path = st.text_input(
         "MIRI video path",
-        value="Images/sn1987a_miri_demo.mp4",
+        value="Images/miri.mp4",
         help="Set the local MP4 path or URL for the MIRI collated results video."
     )
 
