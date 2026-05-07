@@ -440,24 +440,11 @@ elif page == "Results Summary":
 
     st.markdown("---")
     st.subheader("Collated results videos")
-    st.markdown(
-        "Provide local MP4 file paths or URLs for the NIRCam and MIRI collated results videos. "
-        "If the file exists, the video will be displayed below."
-    )
-    nircam_video_path = st.text_input(
-        "NIRCam video path",
-        value="Images/nircam.mp4",
-        help="Set the local MP4 path or URL for the NIRCam collated results video."
-    )
-    miri_video_path = st.text_input(
-        "MIRI video path",
-        value="Images/miri.mp4",
-        help="Set the local MP4 path or URL for the MIRI collated results video."
-    )
+    
+    nircam_video_path = "Images/nircam.mp4"
+    miri_video_path = "Images/miri.mp4"
 
     st.markdown("**NIRCam collated results video**")
-    st.write(f"Path: {nircam_video_path}, Exists: {Path(nircam_video_path).exists()}")
-    st.write(f"Absolute path: {Path(nircam_video_path).resolve()}")
     if nircam_video_path:
         if Path(nircam_video_path).exists() or nircam_video_path.startswith(("http://", "https://")):
             st.video(str(Path(nircam_video_path).resolve()))
@@ -465,8 +452,6 @@ elif page == "Results Summary":
             st.info("Set a valid NIRCam MP4 path or URL once available.")
 
     st.markdown("**MIRI collated results video**")
-    st.write(f"Path: {miri_video_path}, Exists: {Path(miri_video_path).exists()}")
-    st.write(f"Absolute path: {Path(miri_video_path).resolve()}")
     if miri_video_path:
         if Path(miri_video_path).exists() or miri_video_path.startswith(("http://", "https://")):
             st.video(str(Path(miri_video_path).resolve()))
